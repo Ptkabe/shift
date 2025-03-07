@@ -5,9 +5,11 @@ const today = new Date();
 let currentYear = today.getFullYear();
 let currentMonth = today.getMonth() + 1;
 
-// 基本必要スタッフ数
+// 基本必要スタッフ数 (既定)
 let requiredStaff = 3;
+
 // 日別必要スタッフ数
+// 例: { 1: 2, 2: 3, ... }
 let dailyRequiredStaff = {};
 
 // スタッフ配列
@@ -30,11 +32,88 @@ let staffList = [
   },
 ];
 
-// 生成されたシフト結果 { day: [staffId1, staffId2, ...], ... }
+// 生成されたシフト結果 { dayNumber: [staffId, ...], ... }
 let generatedShift = null;
 
+/** 
+ * 4連勤が2回以上発生したスタッフの
+ * 「4連勤ブロック日」を記録するためのマップ
+ * 例: { staffId: Set([2,3,4,5, 10,11,12,13]), ... }
+ * => この日は紫ハイライトする
+ */
+let fourConsecutiveHighlightMap = {};
+
 /*******************************************
- * 日付関連のユーティリティ関数
+ * localStorage読み書き
+ *******************************************/
+function loadStateFromLocalStorage() {
+  const saved = localStorage.getItem("myShiftSchedulerData");
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed.currentYear) currentYear = parsed.currentYear;
+      if (parsed.currentMonth) currentMonth = parsed.currentMonth;
+      if (typeof parsed.requiredStaff === "number") requiredStaff = parsed.requiredStaff;
+      if (parsed.dailyRequiredStaff) dailyRequiredStaff = parsed.dailyRequiredStaff;
+      if (parsed.staffList) staffList = parsed.staffList;
+      if (parsed.generatedShift) generatedShift = parsed.generatedShift;
+    } catch (e) {
+      console.error("Failed to parse localStorage data:", e);
+    }
+  }
+}
+
+function saveStateToLocalStorage() {
+  const data = {
+    currentYear,
+    currentMonth,
+    requiredStaff,
+    dailyRequiredStaff,
+    staffList,
+    generatedShift,
+  };
+  localStorage.setItem("myShiftSchedulerData", JSON.stringify(data));
+}
+
+/*******************************************
+ * リセット用
+ *******************************************/
+function resetAllData() {
+  const ok = confirm("本当にリセットしますか？");
+  if (!ok) return;
+
+  localStorage.removeItem("myShiftSchedulerData");
+  
+  currentYear = today.getFullYear();
+  currentMonth = today.getMonth() + 1;
+  requiredStaff = 3;
+  dailyRequiredStaff = {};
+  staffList = [
+    {
+      id: 1,
+      name: "佐藤",
+      requiredDaysOff: 8,
+      absoluteDaysOff: [],
+      requestedDaysOff: [],
+      mandatoryWorkDays: [],
+    },
+    {
+      id: 2,
+      name: "田中",
+      requiredDaysOff: 10,
+      absoluteDaysOff: [],
+      requestedDaysOff: [],
+      mandatoryWorkDays: [],
+    },
+  ];
+  generatedShift = null;
+  fourConsecutiveHighlightMap = {};
+
+  render();
+}
+
+/*******************************************
+ * 日付関連
  *******************************************/
 function getDaysInMonth(year, month) {
   return new Date(year, month, 0).getDate();
@@ -53,20 +132,20 @@ function generateShift() {
   const dates = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   const shiftTable = {};
-  dates.forEach((day) => {
-    shiftTable[day] = [];
+  dates.forEach((d) => {
+    shiftTable[d] = [];
   });
 
-  // スタッフごとに、「絶対休みでない日」を availableDays に持たせる
+  // スタッフごとに出勤可能日を把握
   const staffAvailability = staffList.map((s) => {
-    const availableDays = dates.filter((d) => {
-      const dateStr = `${currentYear}-${currentMonth}-${d}`;
+    const availableDays = dates.filter((day) => {
+      const dateStr = `${currentYear}-${currentMonth}-${day}`;
       return !s.absoluteDaysOff.includes(dateStr);
     });
     return { ...s, availableDays };
   });
 
-  // 1) mandatory の割り当て
+  // 1) mandatory 割り当て
   dates.forEach((day) => {
     const dateStr = `${currentYear}-${currentMonth}-${day}`;
     const needed = dailyRequiredStaff[day] ?? requiredStaff;
@@ -76,26 +155,25 @@ function generateShift() {
       .filter((s) => s.mandatoryWorkDays.includes(dateStr))
       .map((s) => s.id);
 
-    // まず必須を配置
     shiftTable[day] = [...mandatoryIds];
 
-    // 必要数に達してなければ追加で埋める
     let remain = needed - mandatoryIds.length;
     if (remain > 0) {
-      // 希望休を避けたいので sort
+      // 希望休を持たない人を優先
       const sorted = staffAvailability
-        .filter(
-          (s) => 
-            !shiftTable[day].includes(s.id) &&
-            !s.absoluteDaysOff.includes(dateStr)
+        .filter((s) => 
+          !shiftTable[day].includes(s.id) &&
+          !s.absoluteDaysOff.includes(dateStr)
         )
         .sort((a, b) => {
+          // 希望休を後ろに
           const aReq = a.requestedDaysOff.includes(dateStr) ? 1 : 0;
           const bReq = b.requestedDaysOff.includes(dateStr) ? 1 : 0;
           if (aReq !== bReq) return aReq - bReq;
-          // 必要休日数が多いスタッフは後に
+          // 必要休日数が多い人は後ろ
           return a.requiredDaysOff - b.requiredDaysOff;
         });
+
       const add = sorted.slice(0, remain).map((s) => s.id);
       shiftTable[day].push(...add);
     }
@@ -103,106 +181,126 @@ function generateShift() {
 
   // 2) 必要休日数に満たないスタッフを調整
   staffList.forEach((s) => {
-    const working = Object.keys(shiftTable)
-      .map((day) => parseInt(day))
-      .filter((day) => shiftTable[day].includes(s.id));
-    const actualOff = daysInMonth - working.length;
+    const workingDays = Object.keys(shiftTable)
+      .map((k) => parseInt(k))
+      .filter((k) => shiftTable[k].includes(s.id));
+    const totalDays = getDaysInMonth(currentYear, currentMonth);
+    const actualOff = totalDays - workingDays.length;
 
     if (actualOff < s.requiredDaysOff) {
-      const needOffMore = s.requiredDaysOff - actualOff;
+      const needMoreOff = s.requiredDaysOff - actualOff;
 
-      const adjustableDays = working
+      // 休みに振り替え可能な日
+      const adjustableDays = workingDays
         .filter((day) => {
           const dateStr = `${currentYear}-${currentMonth}-${day}`;
-          // 必須出勤日は外せない
+          // mandatoryな日は外せない
           return !s.mandatoryWorkDays.includes(dateStr);
         })
         .sort((a, b) => {
-          // 希望休の日を優先的に外す
-          const aReq = s.requestedDaysOff.includes(
-            `${currentYear}-${currentMonth}-${a}`
-          ) ? -1 : 0;
-          const bReq = s.requestedDaysOff.includes(
-            `${currentYear}-${currentMonth}-${b}`
-          ) ? -1 : 0;
+          // 希望休の日を優先的に休みに
+          const aReq = s.requestedDaysOff.includes(`${currentYear}-${currentMonth}-${a}`) ? -1 : 0;
+          const bReq = s.requestedDaysOff.includes(`${currentYear}-${currentMonth}-${b}`) ? -1 : 0;
           if (aReq !== bReq) return aReq - bReq;
-
-          // その日の出勤人数が多い日を先に外す
+          // 出勤人数が多い日を先に休みに
           return shiftTable[b].length - shiftTable[a].length;
         });
 
-      for (let i = 0; i < Math.min(needOffMore, adjustableDays.length); i++) {
+      for (let i = 0; i < Math.min(needMoreOff, adjustableDays.length); i++) {
         const d = adjustableDays[i];
         shiftTable[d] = shiftTable[d].filter((id) => id !== s.id);
       }
     }
   });
 
-  // 生成したシフトを反映
+  // 完了
   generatedShift = shiftTable;
 
-  // 3) 連勤チェック
-  checkConsecutiveWorkConstraints();
+  // 4連勤ハイライト判定
+  updateFourConsecutiveHighlight();
 
-  // 画面更新
   render();
 }
 
 /*******************************************
- * 「四連勤1回までOK、それ以上(5連勤)はNG」チェック
+ * 「シフト表セルをクリックで出勤⇔休みをトグル」
  *******************************************/
-function checkConsecutiveWorkConstraints() {
+function toggleShiftCell(staffId, day) {
   if (!generatedShift) return;
 
+  const assigned = generatedShift[day] || [];
+  if (assigned.includes(staffId)) {
+    // 出勤中なら「休み」に
+    generatedShift[day] = assigned.filter((id) => id !== staffId);
+  } else {
+    // 休みなら「出勤」に
+    generatedShift[day] = [...assigned, staffId];
+  }
+
+  // 4連勤ハイライト判定
+  updateFourConsecutiveHighlight();
+
+  render();
+}
+
+/*******************************************
+ * 4連勤が2回以上 → ハイライト
+ * 1回以下 → ハイライト解除
+ *******************************************/
+function updateFourConsecutiveHighlight() {
+  fourConsecutiveHighlightMap = {}; // リセット
+
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
-  const warnings = [];
 
-  // 全スタッフをループ
+  // スタッフごとに「4連勤ブロック」を抽出
   staffList.forEach((s) => {
-    let consecutiveCount = 0;
-    let fourDayBlockCount = 0; // 4連勤ブロックの数
-
+    let consecutive = 0;
+    let blocks = []; // 4連勤ブロックを配列で保持 (例: [[startDay, endDay], ...])
+    
+    // 1日～月末を走査
     for (let d = 1; d <= daysInMonth; d++) {
-      const assigned = generatedShift[d] || [];
-      const isWorking = assigned.includes(s.id);
-
+      const isWorking = generatedShift && generatedShift[d]?.includes(s.id);
       if (isWorking) {
-        consecutiveCount++;
+        consecutive++;
       } else {
-        // 連勤終了
-        if (consecutiveCount === 4) {
-          fourDayBlockCount++;
+        // 休みになったら連勤終了
+        if (consecutive >= 4) {
+          // 直前の4日ブロック = [d - consecutive, d - 1] のうち「最後の4日単位」
+          // 例えば consecutive=4 なら [d-3, d-1]
+          // もし 6連勤なら、その中には 3つの「4連勤ブロック」がある:
+          //    (d-5 ~ d-2), (d-4 ~ d-1), ...
+          // 今回は「連勤のたびに可能な限り全部4日ブロックと数える」ことで
+          // オーバーラップも全部カウントする
+          for (let offset = 0; offset <= consecutive - 4; offset++) {
+            let startDay = d - 4 - offset;
+            let endDay = d - 1 - offset;
+            blocks.push([startDay, endDay]);
+          }
         }
-        if (consecutiveCount >= 5) {
-          warnings.push(
-            `【${s.name}】が${consecutiveCount}連勤（${d - consecutiveCount}日～${d - 1}日）`
-          );
-        }
-        consecutiveCount = 0;
+        consecutive = 0;
       }
     }
-    // 月末で連勤が終わらない可能性もあるので、最後にもチェック
-    if (consecutiveCount === 4) {
-      fourDayBlockCount++;
-    }
-    if (consecutiveCount >= 5) {
-      warnings.push(
-        `【${s.name}】が${consecutiveCount}連勤（${daysInMonth - consecutiveCount + 1}日～${daysInMonth}日）`
-      );
+    // 月末まで連勤が続くケースにも対応
+    if (consecutive >= 4) {
+      for (let offset = 0; offset <= consecutive - 4; offset++) {
+        let startDay = daysInMonth - 4 - offset + 1; // +1はindex調整
+        let endDay = daysInMonth - offset;
+        blocks.push([startDay, endDay]);
+      }
     }
 
-    // 4連勤ブロックが2回以上あれば警告
-    if (fourDayBlockCount > 1) {
-      warnings.push(`【${s.name}】は4連勤が${fourDayBlockCount}回発生`);
+    // blocks の数(ブロック総数)が 2個以上 → それらの日をハイライト
+    if (blocks.length >= 2) {
+      // このスタッフの該当日をまとめる
+      const highlightSet = new Set();
+      blocks.forEach(([start, end]) => {
+        for (let dd = start; dd <= end; dd++) {
+          highlightSet.add(dd);
+        }
+      });
+      fourConsecutiveHighlightMap[s.id] = highlightSet;
     }
   });
-
-  // もし違反があればまとめて alert
-  if (warnings.length > 0) {
-    let message = "連勤制限に違反がありました。\n\n";
-    message += warnings.join("\n");
-    alert(message);
-  }
 }
 
 /*******************************************
@@ -216,6 +314,7 @@ function goToPreviousMonth() {
     currentMonth--;
   }
   generatedShift = null;
+  fourConsecutiveHighlightMap = {};
   render();
 }
 
@@ -227,16 +326,19 @@ function goToNextMonth() {
     currentMonth++;
   }
   generatedShift = null;
+  fourConsecutiveHighlightMap = {};
   render();
 }
 
 function onChangeRequiredStaff(e) {
-  requiredStaff = parseInt(e.target.value, 10) || 1;
+  const val = parseInt(e.target.value, 10);
+  requiredStaff = isNaN(val) ? 1 : val;
   render();
 }
 
 function onChangeDailyStaffRequirement(day, e) {
-  dailyRequiredStaff[day] = parseInt(e.target.value, 10) || requiredStaff;
+  const val = parseInt(e.target.value, 10);
+  dailyRequiredStaff[day] = isNaN(val) ? requiredStaff : val;
   render();
 }
 
@@ -276,9 +378,10 @@ function toggleDate(staffId, day, type) {
     if (s.id !== staffId) return s;
 
     let updated = { ...s };
-    const hasAbs = updated.absoluteDaysOff.includes(dateStr);
-    const hasReq = updated.requestedDaysOff.includes(dateStr);
-    const hasMan = updated.mandatoryWorkDays.includes(dateStr);
+
+    const hasAbs = s.absoluteDaysOff.includes(dateStr);
+    const hasReq = s.requestedDaysOff.includes(dateStr);
+    const hasMan = s.mandatoryWorkDays.includes(dateStr);
 
     switch (type) {
       case "absolute":
@@ -324,19 +427,19 @@ function render() {
   if (!container) return;
   container.innerHTML = "";
 
-  // 大枠
+  // ラッパ
   const mainWrapper = document.createElement("div");
   mainWrapper.className = "scheduler-container";
 
   // タイトル
   const titleEl = document.createElement("h1");
   titleEl.className = "scheduler-title";
-  titleEl.textContent = "シフトスケジューラー (連勤チェック付き)";
+  titleEl.textContent = "シフトスケジューラー (4連勤2回以上で紫ハイライト/トグル可)";
   mainWrapper.appendChild(titleEl);
 
-  /**********************************
-   * 基本設定
-   **********************************/
+  /********************************
+   * 基本設定 + リセットボタン
+   ********************************/
   const basicSection = document.createElement("div");
   basicSection.className = "section mb-8";
 
@@ -345,10 +448,10 @@ function render() {
   basicTitle.textContent = "基本設定";
   basicSection.appendChild(basicTitle);
 
+  // ナビ
   const navRow = document.createElement("div");
   navRow.className = "flex mb-4";
 
-  // 左ナビ (前月/年月/翌月)
   const leftDiv = document.createElement("div");
   leftDiv.className = "flex mr-4";
 
@@ -371,7 +474,7 @@ function render() {
 
   navRow.appendChild(leftDiv);
 
-  // 右ブロック (基本必要スタッフ数)
+  // 右ブロック(基本必要スタッフ数 + リセットボタン)
   const rightDiv = document.createElement("div");
   rightDiv.className = "flex";
 
@@ -384,12 +487,18 @@ function render() {
   staffInput.type = "number";
   staffInput.min = "1";
   staffInput.value = requiredStaff;
-  staffInput.className = "input-text";
+  staffInput.className = "input-text mr-4";
   staffInput.addEventListener("change", onChangeRequiredStaff);
   rightDiv.appendChild(staffInput);
 
-  navRow.appendChild(rightDiv);
+  // リセットボタン
+  const resetBtn = document.createElement("button");
+  resetBtn.className = "button";
+  resetBtn.textContent = "リセット";
+  resetBtn.addEventListener("click", resetAllData);
+  rightDiv.appendChild(resetBtn);
 
+  navRow.appendChild(rightDiv);
   basicSection.appendChild(navRow);
 
   // 日別必要スタッフ数
@@ -406,11 +515,12 @@ function render() {
     const dayDiv = document.createElement("div");
     dayDiv.className = "text-center mb-2";
 
-    const dow = getDayOfWeek(currentYear, currentMonth, d);
+    const dw = getDayOfWeek(currentYear, currentMonth, d);
     const label = document.createElement("div");
-    label.className =
-      "mb-1 font-medium " + (dow === "土" ? "text-saturday" : dow === "日" ? "text-sunday" : "");
-    label.textContent = `${d}(${dow})`;
+    label.className = 
+      "mb-1 font-medium " + 
+      (dw === "土" ? "text-saturday" : dw === "日" ? "text-sunday" : "");
+    label.textContent = `${d}(${dw})`;
     dayDiv.appendChild(label);
 
     const input = document.createElement("input");
@@ -427,9 +537,9 @@ function render() {
   basicSection.appendChild(daysGrid);
   mainWrapper.appendChild(basicSection);
 
-  /**********************************
+  /********************************
    * スタッフ設定
-   **********************************/
+   ********************************/
   const staffSection = document.createElement("div");
   staffSection.className = "mb-8";
 
@@ -449,14 +559,12 @@ function render() {
 
   staffSection.appendChild(staffHeader);
 
-  // スタッフ一覧カード
   staffList.forEach((s) => {
-    const staffCard = document.createElement("div");
-    staffCard.className = "section mb-4";
+    const card = document.createElement("div");
+    card.className = "section mb-4";
 
-    // 上段: 名前入力 + 必要休日数 + 削除ボタン
-    const topRow = document.createElement("div");
-    topRow.className = "flex-between mb-2";
+    const cardTop = document.createElement("div");
+    cardTop.className = "flex-between mb-2";
 
     const leftBox = document.createElement("div");
     leftBox.className = "flex";
@@ -471,10 +579,10 @@ function render() {
     });
     leftBox.appendChild(nameInput);
 
-    const reqLabel = document.createElement("label");
-    reqLabel.className = "mr-2 font-medium";
-    reqLabel.textContent = "必要休日数:";
-    leftBox.appendChild(reqLabel);
+    const reqOffLabel = document.createElement("label");
+    reqOffLabel.className = "mr-2 font-medium";
+    reqOffLabel.textContent = "必要休日数:";
+    leftBox.appendChild(reqOffLabel);
 
     const reqOffInput = document.createElement("input");
     reqOffInput.type = "number";
@@ -487,17 +595,17 @@ function render() {
     });
     leftBox.appendChild(reqOffInput);
 
-    topRow.appendChild(leftBox);
+    cardTop.appendChild(leftBox);
 
     const delBtn = document.createElement("button");
     delBtn.className = "icon-button";
     delBtn.innerHTML = trashIconSVG(18);
     delBtn.addEventListener("click", () => removeStaff(s.id));
-    topRow.appendChild(delBtn);
+    cardTop.appendChild(delBtn);
 
-    staffCard.appendChild(topRow);
+    card.appendChild(cardTop);
 
-    // 絶対休・希望休・必ず出勤 のラベル
+    // 絶対休・希望休・必須出勤 のラベル
     const labelRow = document.createElement("div");
     labelRow.className = "flex mb-2 text-sm";
     labelRow.innerHTML = `
@@ -511,7 +619,7 @@ function render() {
         <span class="inline-block w-3 h-3 bg-mandatory mr-1" style="border-radius:50%;"></span> 必ず出勤
       </div>
     `;
-    staffCard.appendChild(labelRow);
+    card.appendChild(labelRow);
 
     // 日付グリッド
     const dateGrid = document.createElement("div");
@@ -523,8 +631,9 @@ function render() {
 
       const dw = getDayOfWeek(currentYear, currentMonth, d);
       const dayLabel = document.createElement("div");
-      dayLabel.className =
-        "mb-1 text-sm " + (dw === "土" ? "text-saturday" : dw === "日" ? "text-sunday" : "");
+      dayLabel.className = 
+        "mb-1 text-sm " +
+        (dw === "土" ? "text-saturday" : dw === "日" ? "text-sunday" : "");
       dayLabel.textContent = d;
       cell.appendChild(dayLabel);
 
@@ -533,7 +642,7 @@ function render() {
       btnBox.style.flexDirection = "column";
       btnBox.style.gap = "4px";
 
-      // 絶対休み
+      // 絶対休
       const absBtn = document.createElement("button");
       absBtn.className =
         "circle-button " +
@@ -570,15 +679,15 @@ function render() {
       dateGrid.appendChild(cell);
     }
 
-    staffCard.appendChild(dateGrid);
-    staffSection.appendChild(staffCard);
+    card.appendChild(dateGrid);
+    staffSection.appendChild(card);
   });
 
   mainWrapper.appendChild(staffSection);
 
-  /**********************************
+  /********************************
    * シフト生成ボタン
-   **********************************/
+   ********************************/
   const genBtnWrapper = document.createElement("div");
   genBtnWrapper.className = "text-center mb-8";
 
@@ -590,16 +699,16 @@ function render() {
 
   mainWrapper.appendChild(genBtnWrapper);
 
-  /**********************************
-   * 生成されたシフト表
-   **********************************/
+  /********************************
+   * 生成されたシフト表 (クリックトグル)
+   ********************************/
   if (generatedShift) {
     const resultDiv = document.createElement("div");
     resultDiv.className = "mb-8";
 
     const resultTitle = document.createElement("h2");
     resultTitle.className = "section-title mb-4";
-    resultTitle.textContent = "生成されたシフト表 (連勤制限をチェック済み)";
+    resultTitle.textContent = "生成されたシフト表 (セルをクリックで出勤⇔休みトグル)";
     resultDiv.appendChild(resultTitle);
 
     const tableContainer = document.createElement("div");
@@ -610,82 +719,93 @@ function render() {
 
     // thead
     const thead = document.createElement("thead");
-    const trHeader = document.createElement("tr");
+    const headerRow = document.createElement("tr");
 
     const thDate = document.createElement("th");
     thDate.textContent = "日付";
-    trHeader.appendChild(thDate);
+    headerRow.appendChild(thDate);
 
     staffList.forEach((s) => {
       const th = document.createElement("th");
       th.textContent = s.name;
-      trHeader.appendChild(th);
+      headerRow.appendChild(th);
     });
 
     const thCount = document.createElement("th");
     thCount.textContent = "出勤人数";
-    trHeader.appendChild(thCount);
+    headerRow.appendChild(thCount);
 
     const thNeeded = document.createElement("th");
     thNeeded.textContent = "必要人数";
-    trHeader.appendChild(thNeeded);
+    headerRow.appendChild(thNeeded);
 
-    thead.appendChild(trHeader);
+    thead.appendChild(headerRow);
     table.appendChild(thead);
 
     // tbody
     const tbody = document.createElement("tbody");
     for (let d = 1; d <= daysInMonthCount; d++) {
       const row = document.createElement("tr");
-      const dow = getDayOfWeek(currentYear, currentMonth, d);
-      if (dow === "土") {
+      const dw = getDayOfWeek(currentYear, currentMonth, d);
+      if (dw === "土") {
         row.style.backgroundColor = "var(--color-saturday-bg)";
-      } else if (dow === "日") {
+      } else if (dw === "日") {
         row.style.backgroundColor = "var(--color-sunday-bg)";
       }
 
+      // 日付セル
       const dateCell = document.createElement("td");
-      dateCell.textContent = `${d}日(${dow})`;
       dateCell.className = "font-medium";
+      dateCell.textContent = `${d}日(${dw})`;
       row.appendChild(dateCell);
 
-      const assignedStaffIds = generatedShift[d] || [];
+      // 出勤/休みセル
+      const assigned = generatedShift[d] || [];
       const needed = dailyRequiredStaff[d] ?? requiredStaff;
 
-      // スタッフ列
       staffList.forEach((s) => {
         const cell = document.createElement("td");
-        const isWorking = assignedStaffIds.includes(s.id);
-        const dateStr = `${currentYear}-${currentMonth}-${d}`;
-        const isAbsOff = s.absoluteDaysOff.includes(dateStr);
-        const isReqOff = s.requestedDaysOff.includes(dateStr);
-        const isMan = s.mandatoryWorkDays.includes(dateStr);
+        cell.style.cursor = "pointer"; // トグル可能
+        const isWorking = assigned.includes(s.id);
 
+        // クラス割り当て
         if (isWorking) {
           cell.textContent = "出勤";
           cell.className = "working-cell";
-          if (isMan) {
+          // mandatory bold
+          if (s.mandatoryWorkDays.includes(`${currentYear}-${currentMonth}-${d}`)) {
             cell.classList.add("working-mandatory");
           }
         } else {
           cell.textContent = "休み";
           cell.className = "rest-cell";
-          if (isAbsOff) {
+          if (s.absoluteDaysOff.includes(`${currentYear}-${currentMonth}-${d}`)) {
             cell.classList.add("rest-absolute");
-          } else if (isReqOff) {
+          } else if (s.requestedDaysOff.includes(`${currentYear}-${currentMonth}-${d}`)) {
             cell.classList.add("rest-requested");
           }
         }
+
+        // 4連勤2回以上 → purple
+        const highlightSet = fourConsecutiveHighlightMap[s.id];
+        if (highlightSet && highlightSet.has(d)) {
+          // そのスタッフが 2回以上4連勤を持ち、かつこの日がどこかの4連勤ブロックに含まれる
+          cell.classList.add("purple-highlight");
+        }
+
+        // クリックで出勤⇔休みトグル
+        cell.addEventListener("click", () => toggleShiftCell(s.id, d));
+
         row.appendChild(cell);
       });
 
       // 出勤人数
-      const staffCountCell = document.createElement("td");
-      staffCountCell.textContent = assignedStaffIds.length;
-      if (assignedStaffIds.length < needed) {
-        staffCountCell.className = "needed-attention";
+      const countCell = document.createElement("td");
+      countCell.textContent = assigned.length;
+      if (assigned.length < needed) {
+        countCell.className = "needed-attention";
       }
-      row.appendChild(staffCountCell);
+      row.appendChild(countCell);
 
       // 必要人数
       const neededCell = document.createElement("td");
@@ -708,34 +828,34 @@ function render() {
     const summaryTable = document.createElement("table");
     summaryTable.className = "table summary-table";
 
-    // thead
     const summaryThead = document.createElement("thead");
-    const headRow = document.createElement("tr");
+    const summaryHeadRow = document.createElement("tr");
     ["スタッフ", "必要休日数", "実際の休日数", "希望休の達成率"].forEach((txt) => {
       const th = document.createElement("th");
       th.textContent = txt;
-      headRow.appendChild(th);
+      summaryHeadRow.appendChild(th);
     });
-    summaryThead.appendChild(headRow);
+    summaryThead.appendChild(summaryHeadRow);
     summaryTable.appendChild(summaryThead);
 
-    // tbody
     const summaryTbody = document.createElement("tbody");
     staffList.forEach((s) => {
       const tr = document.createElement("tr");
 
+      // 名前
       const tdName = document.createElement("td");
       tdName.textContent = s.name;
       tr.appendChild(tdName);
 
-      const tdNeedOff = document.createElement("td");
-      tdNeedOff.textContent = s.requiredDaysOff;
-      tr.appendChild(tdNeedOff);
+      // 必要休日数
+      const tdReqOff = document.createElement("td");
+      tdReqOff.textContent = s.requiredDaysOff;
+      tr.appendChild(tdReqOff);
 
       // 実際の休日数
       const workingDays = Object.keys(generatedShift)
         .map((k) => parseInt(k))
-        .filter((day) => generatedShift[day].includes(s.id));
+        .filter((k) => generatedShift[k].includes(s.id));
       const actualOff = daysInMonthCount - workingDays.length;
 
       const tdActualOff = document.createElement("td");
@@ -750,15 +870,14 @@ function render() {
         const [y, m, dd] = ds.split("-").map(Number);
         return y === currentYear && m === currentMonth && dd <= daysInMonthCount;
       });
-      const requestedDayNums = requestedOffDays.map((ds) => parseInt(ds.split("-")[2]));
-      const achievedReq = requestedDayNums.filter((day) => !workingDays.includes(day));
-      const rate =
-        requestedDayNums.length > 0
-          ? Math.round((achievedReq.length / requestedDayNums.length) * 100)
-          : 100;
+      const reqOffNum = requestedOffDays.map((ds) => parseInt(ds.split("-")[2]));
+      const achieved = reqOffNum.filter((day) => !workingDays.includes(day));
+      const rate = reqOffNum.length > 0
+        ? Math.round((achieved.length / reqOffNum.length) * 100)
+        : 100;
 
       const tdRate = document.createElement("td");
-      tdRate.textContent = `${rate}% (${achievedReq.length}/${requestedDayNums.length})`;
+      tdRate.textContent = `${rate}% (${achieved.length}/${reqOffNum.length})`;
       tr.appendChild(tdRate);
 
       summaryTbody.appendChild(tr);
@@ -771,10 +890,13 @@ function render() {
   }
 
   container.appendChild(mainWrapper);
+
+  // 最後に state を保存
+  saveStateToLocalStorage();
 }
 
 /**********************************************
- * アイコン用のSVG
+ * アイコンSVG (Lucide風)
  **********************************************/
 function chevronLeftIconSVG(size = 24) {
   return `
@@ -818,5 +940,6 @@ function calendarIconSVG(size = 24) {
  * 初期表示
  **********************************************/
 document.addEventListener("DOMContentLoaded", () => {
+  loadStateFromLocalStorage();
   render();
 });
