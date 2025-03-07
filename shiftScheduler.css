@@ -10,8 +10,9 @@
   --color-orange: #fb923c;
   --color-green: #4ade80;
 
-  --color-sunday-bg: #fff2f2;
-  --color-saturday-bg: #f2f8ff;
+  --color-sunday-bg: #fff2f2;    /* 日曜セル */
+  --color-saturday-bg: #f2f8ff;  /* 土曜セル */
+  --color-purple-highlight: #f3e8ff; /* 4連勤ブロック2回以上のハイライト */
 }
 
 body {
@@ -58,10 +59,12 @@ body {
 .flex { display: flex; align-items: center; }
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
 
-.mb-4 { margin-bottom: 16px !important; }
-.mb-8 { margin-bottom: 32px !important; }
-.mt-6 { margin-top: 24px !important; }
-.mr-4 { margin-right: 16px !important; }
+.mb-0   { margin-bottom: 0   !important; }
+.mb-2   { margin-bottom: 8px !important; }
+.mb-4   { margin-bottom: 16px !important; }
+.mb-8   { margin-bottom: 32px !important; }
+.mt-6   { margin-top: 24px   !important; }
+.mr-4   { margin-right: 16px !important; }
 
 .text-center { text-align: center; }
 .font-medium { font-weight: 500; }
@@ -82,7 +85,9 @@ body {
 .button:hover {
   background-color: var(--color-primary-dark);
 }
-.button-icon svg { margin-right: 4px; }
+.button-icon svg {
+  margin-right: 4px;
+}
 
 .icon-button {
   background: transparent;
@@ -117,7 +122,8 @@ body {
 .text-sunday   { color: #ef4444; }
 
 .circle-button {
-  width: 22px; height: 22px;
+  width: 22px; 
+  height: 22px;
   margin: 0 auto;
   border: 1px solid var(--color-border);
   border-radius: 50%;
@@ -127,11 +133,20 @@ body {
 .circle-button:hover {
   opacity: 0.8;
 }
-.bg-absolute-off { background-color: var(--color-red); }
-.bg-requested-off { background-color: var(--color-orange); }
-.bg-mandatory { background-color: var(--color-green); }
+.bg-absolute-off {
+  background-color: var(--color-red);
+}
+.bg-requested-off {
+  background-color: var(--color-orange);
+}
+.bg-mandatory {
+  background-color: var(--color-green);
+}
 
-.table-container { overflow-x: auto; }
+/* ===== シフト表 ===== */
+.table-container {
+  overflow-x: auto;
+}
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -146,15 +161,40 @@ body {
   padding: 8px;
   text-align: center;
 }
-.table th { font-weight: 600; }
-.working-cell { background-color: #ecfdf5; }
-.working-mandatory { font-weight: bold; }
-.rest-cell { background-color: #f9fafb; }
-.rest-absolute { background-color: #fee2e2; font-weight: bold; }
-.rest-requested { background-color: #ffedd5; }
-.needed-attention { background-color: #fee2e2; font-weight: bold; }
+.table th {
+  font-weight: 600;
+}
 
-.summary-table { margin-top: 16px; }
+/* 出勤セル */
+.working-cell {
+  background-color: #ecfdf5; 
+}
+.working-mandatory {
+  font-weight: bold;
+}
+
+/* 休みセル */
+.rest-cell {
+  background-color: #f9fafb; 
+}
+.rest-absolute {
+  background-color: #fee2e2; 
+  font-weight: bold;
+}
+.rest-requested {
+  background-color: #ffedd5; 
+}
+
+/* 必要人数未満 */
+.needed-attention {
+  background-color: #fee2e2;
+  font-weight: bold;
+}
+
+/* 休日数サマリー */
+.summary-table {
+  margin-top: 16px;
+}
 .summary-table th, .summary-table td {
   border: 1px solid var(--color-border);
   padding: 8px;
@@ -165,6 +205,13 @@ body {
   font-weight: bold;
 }
 
+/* ===== 4連勤が2回以上になった箇所を紫ハイライト ===== */
+/* クリックで特定セルに付与するクラスでも可。今回はJSでtdにクラス追加する想定 */
+.purple-highlight {
+  background-color: var(--color-purple-highlight) !important;
+}
+
+/* ===== アイコン (Lucide風) ===== */
 .svg-icon {
   stroke: currentColor;
   stroke-width: 2;
