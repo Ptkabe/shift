@@ -1,0 +1,298 @@
+/* ルートの色変数（お好みで変更してね） */
+:root {
+  --color-primary: #3f8efc;
+  --color-primary-dark: #2c6cd2;
+  --color-bg: #fafafa;
+  --color-bg-secondary: #f5f5f5;
+  --color-text: #333;
+  --color-border: #ddd;
+
+  --color-red: #f87171;
+  --color-orange: #fb923c;
+  --color-green: #4ade80;
+
+  --color-sunday-bg: #fff2f2;    /* 日曜セルの背景色 */
+  --color-saturday-bg: #f2f8ff;  /* 土曜セルの背景色 */
+}
+
+/* body 全体 */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg);
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+/* メインコンテナ */
+#shift-scheduler {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/**********************************************
+ * セクションやタイトルなど
+ **********************************************/
+.scheduler-container {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.scheduler-title {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* セクション */
+.section {
+  background-color: var(--color-bg-secondary);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+/**********************************************
+ * Flex関連の便利クラス
+ **********************************************/
+.flex {
+  display: flex;
+  align-items: center;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/**********************************************
+ * テキストや余白のユーティリティ
+ **********************************************/
+.mb-0   { margin-bottom: 0 !important; }
+.mb-1   { margin-bottom: 4px !important; }
+.mb-2   { margin-bottom: 8px !important; }
+.mb-3   { margin-bottom: 12px !important; }
+.mb-4   { margin-bottom: 16px !important; }
+.mb-6   { margin-bottom: 24px !important; }
+.mb-8   { margin-bottom: 32px !important; }
+.mt-6   { margin-top: 24px !important; }
+
+.mr-1   { margin-right: 4px !important; }
+.mr-2   { margin-right: 8px !important; }
+.mr-3   { margin-right: 12px !important; }
+.mr-4   { margin-right: 16px !important; }
+
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+.font-medium {
+  font-weight: 500;
+}
+.font-bold {
+  font-weight: 700;
+}
+.text-lg {
+  font-size: 1.125rem;
+}
+
+/**********************************************
+ * ボタンや入力フォーム
+ **********************************************/
+.button {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--color-primary);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.button:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.button-icon svg {
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* 前後ボタン用 */
+.icon-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+.icon-button:hover {
+  background-color: #eee;
+}
+
+/* input[type=number], input[type=text] */
+.input-text {
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  text-align: center;
+  width: 60px;
+  outline: none;
+}
+.input-text:focus {
+  border-color: var(--color-primary);
+}
+
+/**********************************************
+ * カレンダーの日付グリッド
+ **********************************************/
+.grid-7 {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+/* 土日の色付け */
+.text-saturday {
+  color: #3b82f6; /* お好みで */
+}
+.text-sunday {
+  color: #ef4444; /* お好みで */
+}
+
+/**********************************************
+ * 絶対休・希望休・必ず出勤 ボタン
+ **********************************************/
+.circle-button {
+  width: 22px;
+  height: 22px;
+  margin: 0 auto;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.circle-button:hover {
+  opacity: 0.8;
+}
+
+/* バッジ色 */
+.bg-absolute-off {
+  background-color: var(--color-red);
+}
+.bg-requested-off {
+  background-color: var(--color-orange);
+}
+.bg-mandatory {
+  background-color: var(--color-green);
+}
+
+/* hover用の薄い色(お好み) */
+.hover-absolute-off:hover {
+  background-color: #ffe4e4;
+}
+.hover-requested-off:hover {
+  background-color: #ffe8d9;
+}
+.hover-mandatory:hover {
+  background-color: #e7fbe9;
+}
+
+/**********************************************
+ * テーブル
+ **********************************************/
+.table-container {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--color-border);
+  background-color: #fff;
+}
+
+.table thead tr {
+  background-color: #f3f3f3;
+}
+.table th, .table td {
+  border: 1px solid var(--color-border);
+  padding: 8px;
+  text-align: center;
+}
+.table th {
+  font-weight: 600;
+}
+
+/* 出勤セルの色 */
+.working-cell {
+  background-color: #ecfdf5; /* 薄いグリーン */
+}
+.working-mandatory {
+  font-weight: bold;
+}
+
+/* 休みセルの色 */
+.rest-cell {
+  background-color: #f9fafb; /* 薄いグレー */
+}
+.rest-absolute {
+  background-color: #fee2e2; /* 薄い赤 */
+  font-weight: bold;
+}
+.rest-requested {
+  background-color: #ffedd5; /* 薄いオレンジ */
+}
+
+/* 必要人数に満たない日の強調 */
+.needed-attention {
+  background-color: #fee2e2; /* 薄い赤 */
+  font-weight: bold;
+}
+
+/**********************************************
+ * 休日数サマリーテーブル
+ **********************************************/
+.summary-table {
+  margin-top: 16px;
+}
+.summary-table th, .summary-table td {
+  border: 1px solid var(--color-border);
+  padding: 8px;
+  text-align: center;
+}
+
+/* 必要休日数を下回った時の強調 */
+.too-few-off {
+  background-color: #fee2e2;
+  font-weight: bold;
+}
+
+/**********************************************
+ * アイコンのための svg 要素（色はcurrentColor）
+ **********************************************/
+.svg-icon {
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  vertical-align: middle;
+}
