@@ -11,7 +11,7 @@ let requiredStaff = 3;
 // 日別必要スタッフ数を保持するオブジェクト
 let dailyRequiredStaff = {};
 
-// スタッフ配列
+// スタッフ配列（絶対休み等の希望条件をもつ）
 let staffList = [
   {
     id: 1,
@@ -148,7 +148,23 @@ function generateShift() {
   });
 
   generatedShift = shiftTable;
-  render();
+  render(); // 再描画
+}
+
+/*******************************************
+ * テーブルセルの出勤/休みトグル
+ *******************************************/
+function toggleShiftCell(staffId, day) {
+  if (!generatedShift) return;
+  const assigned = generatedShift[day] || [];
+  // すでに出勤に入っていれば -> 休みにする(配列から除外)
+  // いなければ -> 出勤に追加
+  if (assigned.includes(staffId)) {
+    generatedShift[day] = assigned.filter((id) => id !== staffId);
+  } else {
+    generatedShift[day] = [...assigned, staffId];
+  }
+  render(); // 再描画し、サマリーなども更新
 }
 
 /*******************************************
@@ -399,7 +415,7 @@ function render() {
 
   staffSection.appendChild(staffHeader);
 
-  // スタッフカード列
+  // スタッフカード
   staffList.forEach((s) => {
     const staffCard = document.createElement("div");
     staffCard.className = "section mb-4";
@@ -547,7 +563,7 @@ function render() {
     // 見出し
     const resultTitle = document.createElement("h2");
     resultTitle.className = "section-title mb-4";
-    resultTitle.textContent = "生成されたシフト表";
+    resultTitle.textContent = "生成されたシフト表 (セルをクリックでトグルできます)";
     resultDiv.appendChild(resultTitle);
 
     const tableContainer = document.createElement("div");
@@ -608,6 +624,7 @@ function render() {
         const isReqOff = s.requestedDaysOff.includes(dateStr);
         const isMan = s.mandatoryWorkDays.includes(dateStr);
 
+        // テキスト
         if (isWorking) {
           cell.textContent = "出勤";
           cell.className = "working-cell";
@@ -623,6 +640,11 @@ function render() {
             cell.classList.add("rest-requested");
           }
         }
+
+        // **セルクリックでトグルする！**
+        cell.style.cursor = "pointer";
+        cell.addEventListener("click", () => toggleShiftCell(s.id, d));
+
         row.appendChild(cell);
       });
 
@@ -693,8 +715,8 @@ function render() {
 
       // 希望休達成率
       const requestedOffDays = s.requestedDaysOff.filter((ds) => {
-        const [y, m, day] = ds.split("-").map((x) => parseInt(x));
-        return y === currentYear && m === currentMonth && day <= daysInMonthCount;
+        const [y, m, dd] = ds.split("-").map((x) => parseInt(x));
+        return y === currentYear && m === currentMonth && dd <= daysInMonthCount;
       });
       const requestedDayNums = requestedOffDays.map((ds) => parseInt(ds.split("-")[2]));
       const achieved = requestedDayNums.filter((day) => !workingDays.includes(day));
