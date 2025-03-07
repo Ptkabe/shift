@@ -32,9 +32,6 @@ body {
   padding: 20px;
 }
 
-/**********************************************
- * セクションやタイトルなど
- **********************************************/
 .scheduler-container {
   background-color: #fff;
   border-radius: 8px;
@@ -49,7 +46,6 @@ body {
   text-align: center;
 }
 
-/* セクション */
 .section {
   background-color: var(--color-bg-secondary);
   padding: 16px;
@@ -63,9 +59,6 @@ body {
   margin-bottom: 16px;
 }
 
-/**********************************************
- * Flex関連の便利クラス
- **********************************************/
 .flex {
   display: flex;
   align-items: center;
@@ -77,9 +70,6 @@ body {
   align-items: center;
 }
 
-/**********************************************
- * テキストや余白のユーティリティ
- **********************************************/
 .mb-0   { margin-bottom: 0 !important; }
 .mb-1   { margin-bottom: 4px !important; }
 .mb-2   { margin-bottom: 8px !important; }
@@ -89,16 +79,11 @@ body {
 .mb-8   { margin-bottom: 32px !important; }
 .mt-6   { margin-top: 24px !important; }
 
-.mr-1   { margin-right: 4px !important; }
 .mr-2   { margin-right: 8px !important; }
-.mr-3   { margin-right: 12px !important; }
 .mr-4   { margin-right: 16px !important; }
 
 .text-center {
   text-align: center;
-}
-.text-right {
-  text-align: right;
 }
 .font-medium {
   font-weight: 500;
@@ -110,9 +95,7 @@ body {
   font-size: 1.125rem;
 }
 
-/**********************************************
- * ボタンや入力フォーム
- **********************************************/
+/* ボタンや入力 */
 .button {
   display: inline-flex;
   align-items: center;
@@ -128,13 +111,11 @@ body {
 .button:hover {
   background-color: var(--color-primary-dark);
 }
-
 .button-icon svg {
   margin-right: 4px;
   vertical-align: middle;
 }
 
-/* 前後ボタン用 */
 .icon-button {
   background: transparent;
   border: none;
@@ -147,7 +128,6 @@ body {
   background-color: #eee;
 }
 
-/* input[type=number], input[type=text] */
 .input-text {
   border: 1px solid var(--color-border);
   border-radius: 4px;
@@ -160,26 +140,21 @@ body {
   border-color: var(--color-primary);
 }
 
-/**********************************************
- * カレンダーの日付グリッド
- **********************************************/
+/* グリッド */
 .grid-7 {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
 }
 
-/* 土日の色付け */
 .text-saturday {
-  color: #3b82f6; /* お好みで */
+  color: #3b82f6;
 }
 .text-sunday {
-  color: #ef4444; /* お好みで */
+  color: #ef4444;
 }
 
-/**********************************************
- * 絶対休・希望休・必ず出勤 ボタン
- **********************************************/
+/* circleボタン */
 .circle-button {
   width: 22px;
   height: 22px;
@@ -192,8 +167,6 @@ body {
 .circle-button:hover {
   opacity: 0.8;
 }
-
-/* バッジ色 */
 .bg-absolute-off {
   background-color: var(--color-red);
 }
@@ -203,8 +176,6 @@ body {
 .bg-mandatory {
   background-color: var(--color-green);
 }
-
-/* hover用の薄い色(お好み) */
 .hover-absolute-off:hover {
   background-color: #ffe4e4;
 }
@@ -215,20 +186,16 @@ body {
   background-color: #e7fbe9;
 }
 
-/**********************************************
- * テーブル
- **********************************************/
+/* テーブル */
 .table-container {
   overflow-x: auto;
 }
-
 .table {
   width: 100%;
   border-collapse: collapse;
   border: 1px solid var(--color-border);
   background-color: #fff;
 }
-
 .table thead tr {
   background-color: #f3f3f3;
 }
@@ -240,36 +207,28 @@ body {
 .table th {
   font-weight: 600;
 }
-
-/* 出勤セルの色 */
 .working-cell {
-  background-color: #ecfdf5; /* 薄いグリーン */
+  background-color: #ecfdf5;
 }
 .working-mandatory {
   font-weight: bold;
 }
-
-/* 休みセルの色 */
 .rest-cell {
-  background-color: #f9fafb; /* 薄いグレー */
+  background-color: #f9fafb;
 }
 .rest-absolute {
-  background-color: #fee2e2; /* 薄い赤 */
+  background-color: #fee2e2;
   font-weight: bold;
 }
 .rest-requested {
-  background-color: #ffedd5; /* 薄いオレンジ */
+  background-color: #ffedd5;
 }
-
-/* 必要人数に満たない日の強調 */
 .needed-attention {
-  background-color: #fee2e2; /* 薄い赤 */
+  background-color: #fee2e2;
   font-weight: bold;
 }
 
-/**********************************************
- * 休日数サマリーテーブル
- **********************************************/
+/* サマリー */
 .summary-table {
   margin-top: 16px;
 }
@@ -278,16 +237,12 @@ body {
   padding: 8px;
   text-align: center;
 }
-
-/* 必要休日数を下回った時の強調 */
 .too-few-off {
   background-color: #fee2e2;
   font-weight: bold;
 }
 
-/**********************************************
- * アイコンのための svg 要素（色はcurrentColor）
- **********************************************/
+/* アイコン */
 .svg-icon {
   stroke: currentColor;
   stroke-width: 2;
