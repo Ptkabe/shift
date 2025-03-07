@@ -10,9 +10,10 @@
   --color-orange: #fb923c;
   --color-green: #4ade80;
 
-  --color-sunday-bg: #fff2f2;    /* 日曜セル */
-  --color-saturday-bg: #f2f8ff;  /* 土曜セル */
-  --color-purple-highlight: #f3e8ff; /* 4連勤ブロック2回以上のハイライト */
+  --color-sunday-bg: #fff2f2;   
+  --color-saturday-bg: #f2f8ff; 
+  --color-purple: #f3e8ff; 
+  --color-locked: #e2e2e2; /* ロック時に行の背景をややグレーに */
 }
 
 body {
@@ -59,12 +60,15 @@ body {
 .flex { display: flex; align-items: center; }
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
 
-.mb-0   { margin-bottom: 0   !important; }
-.mb-2   { margin-bottom: 8px !important; }
-.mb-4   { margin-bottom: 16px !important; }
-.mb-8   { margin-bottom: 32px !important; }
-.mt-6   { margin-top: 24px   !important; }
-.mr-4   { margin-right: 16px !important; }
+.mb-0  { margin-bottom: 0  !important; }
+.mb-2  { margin-bottom: 8px  !important; }
+.mb-4  { margin-bottom: 16px !important; }
+.mb-6  { margin-bottom: 24px !important; }
+.mb-8  { margin-bottom: 32px !important; }
+.mt-6  { margin-top: 24px !important; }
+
+.mr-2  { margin-right: 8px !important; }
+.mr-4  { margin-right: 16px !important; }
 
 .text-center { text-align: center; }
 .font-medium { font-weight: 500; }
@@ -205,13 +209,17 @@ body {
   font-weight: bold;
 }
 
-/* ===== 4連勤が2回以上になった箇所を紫ハイライト ===== */
-/* クリックで特定セルに付与するクラスでも可。今回はJSでtdにクラス追加する想定 */
-.purple-highlight {
-  background-color: var(--color-purple-highlight) !important;
+/* ロックされた行 */
+.locked-row {
+  background-color: var(--color-locked) !important;
 }
 
-/* ===== アイコン (Lucide風) ===== */
+/* 4連勤2回以上 => 紫でハイライト(例) */
+.purple-highlight {
+  background-color: var(--color-purple) !important;
+}
+
+/* アイコン */
 .svg-icon {
   stroke: currentColor;
   stroke-width: 2;
@@ -219,4 +227,32 @@ body {
   stroke-linejoin: round;
   fill: none;
   vertical-align: middle;
+}
+
+/* メッセージ表示 */
+.message-area {
+  background-color: #fafafa;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #333;
+}
+.message-area h3 {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.message-error {
+  color: #b91c1c; /* 赤系 */
+}
+.message-success {
+  color: #166534; /* 緑系 */
+}
+.message-hint {
+  color: #1d4ed8; /* 青系 */
+  margin-top: 8px;
+  font-style: italic;
 }
