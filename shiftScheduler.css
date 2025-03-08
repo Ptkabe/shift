@@ -1,26 +1,26 @@
 :root {
-  --color-primary: #3f8efc;
-  --color-primary-dark: #2c6cd2;
-  --color-bg: #fafafa;
-  --color-bg-secondary: #f5f5f5;
-  --color-text: #333;
-  --color-border: #ddd;
+  --color-primary: #007aff; /* Apple blue */
+  --color-primary-dark: #005bb5;
+  --color-bg: #ffffff; /* White background */
+  --color-bg-secondary: #f2f2f7; /* Light grey background */
+  --color-text: #1c1c1e; /* Dark text */
+  --color-border: #d1d1d6; /* Light border */
 
-  --color-red: #f87171;
-  --color-orange: #fb923c;
-  --color-green: #4ade80;
+  --color-red: #ff3b30;
+  --color-orange: #ff9500;
+  --color-green: #34c759;
 
   --color-sunday-bg: #fff2f2;   
   --color-saturday-bg: #f2f8ff; 
   --color-purple: #f3e8ff; 
-  --color-locked: #e2e2e2; /* ロック時に行の背景をややグレーに */
+  --color-locked: #e2e2e2; 
 }
 
 body {
   margin: 0;
   padding: 0;
   background-color: var(--color-bg);
-  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   color: var(--color-text);
   line-height: 1.6;
 }
@@ -33,26 +33,27 @@ body {
 
 .scheduler-container {
   background-color: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .scheduler-title {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: bold;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
   text-align: center;
+  color: var(--color-primary);
 }
 
 .section {
   background-color: var(--color-bg-secondary);
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 24px;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 32px;
 }
 .section-title {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 16px;
 }
@@ -73,45 +74,47 @@ body {
 .text-center { text-align: center; }
 .font-medium { font-weight: 500; }
 .font-bold   { font-weight: 700; }
-.text-lg     { font-size: 1.125rem; }
+.text-lg     { font-size: 1.25rem; }
 
 .button {
   display: inline-flex;
   align-items: center;
   background-color: var(--color-primary);
   color: #fff;
-  padding: 8px 12px;
-  border-radius: 4px;
+  padding: 10px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, box-shadow 0.2s;
   border: none;
 }
 .button:hover {
   background-color: var(--color-primary-dark);
+  box-shadow: 0 4px 12px rgba(0,123,255,0.3);
 }
 .button-icon svg {
-  margin-right: 4px;
+  margin-right: 8px;
 }
 
 .icon-button {
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
+  padding: 6px;
+  border-radius: 6px;
   transition: background-color 0.2s;
 }
 .icon-button:hover {
-  background-color: #eee;
+  background-color: #f2f2f7;
 }
 
 .input-text {
   border: 1px solid var(--color-border);
-  border-radius: 4px;
-  padding: 4px 8px;
+  border-radius: 8px;
+  padding: 6px 12px;
   text-align: center;
-  width: 60px;
+  width: 80px;
   outline: none;
+  transition: border-color 0.2s;
 }
 .input-text:focus {
   border-color: var(--color-primary);
@@ -120,22 +123,23 @@ body {
 .grid-7 {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 8px;
 }
-.text-saturday { color: #3b82f6; }
-.text-sunday   { color: #ef4444; }
+.text-saturday { color: #007aff; }
+.text-sunday   { color: #ff3b30; }
 
 .circle-button {
-  width: 22px; 
-  height: 22px;
+  width: 24px; 
+  height: 24px;
   margin: 0 auto;
   border: 1px solid var(--color-border);
   border-radius: 50%;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, box-shadow 0.2s;
 }
 .circle-button:hover {
-  opacity: 0.8;
+  background-color: var(--color-bg-secondary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 .bg-absolute-off {
   background-color: var(--color-red);
@@ -147,7 +151,6 @@ body {
   background-color: var(--color-green);
 }
 
-/* ===== シフト表 ===== */
 .table-container {
   overflow-x: auto;
 }
@@ -156,13 +159,15 @@ body {
   border-collapse: collapse;
   border: 1px solid var(--color-border);
   background-color: #fff;
+  border-radius: 12px;
+  overflow: hidden;
 }
 .table thead tr {
-  background-color: #f3f3f3;
+  background-color: #f2f2f7;
 }
 .table th, .table td {
   border: 1px solid var(--color-border);
-  padding: 8px;
+  padding: 12px;
   text-align: center;
 }
 .table th {
@@ -171,7 +176,7 @@ body {
 
 /* 出勤セル */
 .working-cell {
-  background-color: #ecfdf5; 
+  background-color: #d4f2ff; 
 }
 .working-mandatory {
   font-weight: bold;
@@ -201,7 +206,7 @@ body {
 }
 .summary-table th, .summary-table td {
   border: 1px solid var(--color-border);
-  padding: 8px;
+  padding: 12px;
   text-align: center;
 }
 .too-few-off {
@@ -235,24 +240,24 @@ body {
   margin-top: 16px;
   padding: 16px;
   border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  line-height: 1.4;
-  color: #333;
+  border-radius: 12px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text);
 }
 .message-area h3 {
-  font-size: 1rem;
+  font-size: 1.25rem;
   font-weight: bold;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 .message-error {
-  color: #b91c1c; /* 赤系 */
+  color: #ff3b30; 
 }
 .message-success {
-  color: #166534; /* 緑系 */
+  color: #34c759; 
 }
 .message-hint {
-  color: #1d4ed8; /* 青系 */
+  color: #007aff; 
   margin-top: 8px;
   font-style: italic;
 }
