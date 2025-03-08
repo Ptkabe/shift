@@ -1,263 +1,76 @@
-:root {
-  --color-primary: #007aff; /* Apple blue */
-  --color-primary-dark: #005bb5;
-  --color-bg: #ffffff; /* White background */
-  --color-bg-secondary: #f2f2f7; /* Light grey background */
-  --color-text: #1c1c1e; /* Dark text */
-  --color-border: #d1d1d6; /* Light border */
-
-  --color-red: #ff3b30;
-  --color-orange: #ff9500;
-  --color-green: #34c759;
-
-  --color-sunday-bg: #fff2f2;   
-  --color-saturday-bg: #f2f8ff; 
-  --color-purple: #f3e8ff; 
-  --color-locked: #e2e2e2; 
-}
-
+/* Set base font and background color */
 body {
-  margin: 0;
-  padding: 0;
-  background-color: var(--color-bg);
-  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
-  color: var(--color-text);
-  line-height: 1.6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f8f8f8;
+    color: #333;
+    margin: 0;
+    padding: 0;
 }
 
-#shift-scheduler {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+/* Add whitespace */
+.container {
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 1200px;
 }
 
-.scheduler-container {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+/* Minimalistic buttons */
+button {
+    background-color: #007aff; /* Apple blue */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 10px 0;
 }
 
-.scheduler-title {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 32px;
-  text-align: center;
-  color: var(--color-primary);
+button:hover {
+    background-color: #005bb5;
 }
 
-.section {
-  background-color: var(--color-bg-secondary);
-  padding: 24px;
-  border-radius: 12px;
-  margin-bottom: 32px;
-}
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 16px;
+/* Clean palette and contrast for headings */
+h1, h2, h3, h4, h5, h6 {
+    color: #1c1c1e;
+    margin-bottom: 10px;
 }
 
-.flex { display: flex; align-items: center; }
-.flex-between { display: flex; justify-content: space-between; align-items: center; }
-
-.mb-0  { margin-bottom: 0  !important; }
-.mb-2  { margin-bottom: 8px  !important; }
-.mb-4  { margin-bottom: 16px !important; }
-.mb-6  { margin-bottom: 24px !important; }
-.mb-8  { margin-bottom: 32px !important; }
-.mt-6  { margin-top: 24px !important; }
-
-.mr-2  { margin-right: 8px !important; }
-.mr-4  { margin-right: 16px !important; }
-
-.text-center { text-align: center; }
-.font-medium { font-weight: 500; }
-.font-bold   { font-weight: 700; }
-.text-lg     { font-size: 1.25rem; }
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  background-color: var(--color-primary);
-  color: #fff;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s, box-shadow 0.2s;
-  border: none;
-}
-.button:hover {
-  background-color: var(--color-primary-dark);
-  box-shadow: 0 4px 12px rgba(0,123,255,0.3);
-}
-.button-icon svg {
-  margin-right: 8px;
+/* Links with clear contrast */
+a {
+    color: #007aff;
+    text-decoration: none;
 }
 
-.icon-button {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-}
-.icon-button:hover {
-  background-color: #f2f2f7;
+a:hover {
+    text-decoration: underline;
 }
 
-.input-text {
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 6px 12px;
-  text-align: center;
-  width: 80px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.input-text:focus {
-  border-color: var(--color-primary);
+/* Use of whitespace in forms */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.grid-7 {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
-}
-.text-saturday { color: #007aff; }
-.text-sunday   { color: #ff3b30; }
-
-.circle-button {
-  width: 24px; 
-  height: 24px;
-  margin: 0 auto;
-  border: 1px solid var(--color-border);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background-color 0.2s, box-shadow 0.2s;
-}
-.circle-button:hover {
-  background-color: var(--color-bg-secondary);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-.bg-absolute-off {
-  background-color: var(--color-red);
-}
-.bg-requested-off {
-  background-color: var(--color-orange);
-}
-.bg-mandatory {
-  background-color: var(--color-green);
+/* Table styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
 }
 
-.table-container {
-  overflow-x: auto;
-}
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  border: 1px solid var(--color-border);
-  background-color: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-}
-.table thead tr {
-  background-color: #f2f2f7;
-}
-.table th, .table td {
-  border: 1px solid var(--color-border);
-  padding: 12px;
-  text-align: center;
-}
-.table th {
-  font-weight: 600;
+th, td {
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
 }
 
-/* 出勤セル */
-.working-cell {
-  background-color: #d4f2ff; 
-}
-.working-mandatory {
-  font-weight: bold;
-}
-
-/* 休みセル */
-.rest-cell {
-  background-color: #f9fafb; 
-}
-.rest-absolute {
-  background-color: #fee2e2; 
-  font-weight: bold;
-}
-.rest-requested {
-  background-color: #ffedd5; 
-}
-
-/* 必要人数未満 */
-.needed-attention {
-  background-color: #fee2e2;
-  font-weight: bold;
-}
-
-/* 休日数サマリー */
-.summary-table {
-  margin-top: 16px;
-}
-.summary-table th, .summary-table td {
-  border: 1px solid var(--color-border);
-  padding: 12px;
-  text-align: center;
-}
-.too-few-off {
-  background-color: #fee2e2;
-  font-weight: bold;
-}
-
-/* ロックされた行 */
-.locked-row {
-  background-color: var(--color-locked) !important;
-}
-
-/* 4連勤2回以上 => 紫でハイライト(例) */
-.purple-highlight {
-  background-color: var(--color-purple) !important;
-}
-
-/* アイコン */
-.svg-icon {
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-  vertical-align: middle;
-}
-
-/* メッセージ表示 */
-.message-area {
-  background-color: #fafafa;
-  margin-top: 16px;
-  padding: 16px;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--color-text);
-}
-.message-area h3 {
-  font-size: 1.25rem;
-  font-weight: bold;
-  margin-bottom: 12px;
-}
-.message-error {
-  color: #ff3b30; 
-}
-.message-success {
-  color: #34c759; 
-}
-.message-hint {
-  color: #007aff; 
-  margin-top: 8px;
-  font-style: italic;
+/* Footer styling */
+footer {
+    background-color: #f8f8f8;
+    color: #6e6e73;
+    padding: 20px;
+    text-align: center;
+    border-top: 1px solid #eaeaea;
 }
